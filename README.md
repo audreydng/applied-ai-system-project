@@ -17,17 +17,71 @@ Replace this paragraph with your own summary of what your version does.
 
 ## How The System Works
 
-Explain your design in plain language.
+Real world recommendation systems combine behavioral signals (plays, skips, repeats, saves, and session context) with content features, then rank results using a tradeoff between accuracy and discovery. This version prioritizes interpretability: each recommendation comes from a transparent point-based score so we can clearly explain why one song ranked above another.
 
-Some prompts to answer:
+### Step 1: Data Definition
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+I expanded `data/songs.csv` from 10 to 18 songs while keeping the same valid CSV headers:
 
-You can include a simple diagram or bullet list if helpful.
+- `id`, `title`, `artist`
+- `genre`, `mood`
+- `energy` (0.0 to 1.0)
+- `tempo_bpm`, `valence`
+- `danceability`, `acousticness`
+
+The added songs increase diversity with genres and moods that were not in the starter set (for example: classical, house, country, hip hop, funk, gospel, folk, and moods like calm, euphoric, warm, confident, playful, uplifting, melancholic).
+
+### Step 2: User Profile
+
+Proposed taste profile dictionary:
+
+```python
+user_profile = {
+   "favorite_genre": "lofi",
+   "favorite_mood": "chill",
+   "target_energy": 0.38,
+   "likes_acoustic": True,
+}
+```
+
+Critique: this profile is specific enough to separate "intense rock" from "chill lofi" because genre and mood must match, energy is far lower than intense tracks, and `likes_acoustic=True` favors songs with higher acousticness.
+
+### Step 3: Algorithm Recipe
+
+Scoring logic for each song:
+
+- +2.0 points if `song.genre == favorite_genre`
+- +1.0 point if `song.mood == favorite_mood`
+- +2.0 * `(1 - abs(song.energy - target_energy))` for energy similarity
+- +0.75 points if `likes_acoustic=True` and `song.acousticness >= 0.60`
+- +0.35 * `song.valence` as a light tie-breaker for positivity
+- +0.20 * `song.danceability` as a light tie-breaker for groove
+
+Recommendation rule:
+
+- Score every song in the catalog
+- Sort songs by score (highest first)
+- Return Top K songs (for example, K = 5)
+
+### Step 4: Data Flow Map
+
+```mermaid
+flowchart TD
+   A[Input: User Preferences Dictionary] --> B[Load songs.csv]
+   B --> C[Loop through one song at a time]
+   C --> D[Compute weighted score]
+   D --> E[Store song + score + explanation]
+   E --> F{More songs?}
+   F -- Yes --> C
+   F -- No --> G[Sort all songs by score descending]
+   G --> H[Output: Top K recommendations]
+```
+
+### Step 5: Expected Biases
+
+- The system may over-prioritize genre matches and miss cross-genre songs that fit mood and energy well.
+- A single fixed profile can flatten taste variety over time and reduce discovery.
+- Acoustic preference as a threshold can unfairly down-rank borderline songs even if they otherwise fit.
 
 ---
 
