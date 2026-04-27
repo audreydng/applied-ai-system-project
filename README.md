@@ -1,269 +1,133 @@
-# 🎵 Music Recommender Simulation
+# Music Recommender Simulation
 
-## Project Summary
+## Title and Summary
 
-In this project you will build and explain a small music recommender system.
+**Original project name:** Music Recommender Simulation
 
-Your goal is to:
+This project started as a small, transparent recommender built in Modules 1-3. Its original goal was to show how song metadata and a user taste profile can be turned into ranked recommendations with simple scoring rules. In its current form, it still does that, but it also emphasizes reliability: the system is easy to inspect, easy to test, and easy to explain.
 
-- Represent songs and a user "taste profile" as data
-- Design a scoring rule that turns that data into recommendations
-- Evaluate what your system gets right and wrong
-- Reflect on how this mirrors real world AI recommenders
+The project matters because it demonstrates the core trade-off in many AI systems: the more transparent the logic is, the easier it is to understand and debug, even if it is less powerful than a large learned model.
 
-Replace this paragraph with your own summary of what your version does.
+## What The System Does
 
----
+The app loads a small catalog of songs from CSV, compares each song to a user profile, and returns the best matches with a short explanation for each result. It scores genre, mood, energy, acousticness, valence, and danceability, then sorts the full catalog by total score.
 
-## How The System Works
-
-Real world recommendation systems combine behavioral signals (plays, skips, repeats, saves, and session context) with content features, then rank results using a tradeoff between accuracy and discovery. This version prioritizes interpretability: each recommendation comes from a transparent point-based score so we can clearly explain why one song ranked above another.
-
-### Step 1: Data Definition
-
-I expanded `data/songs.csv` from 10 to 18 songs while keeping the same valid CSV headers:
-
-- `id`, `title`, `artist`
-- `genre`, `mood`
-- `energy` (0.0 to 1.0)
-- `tempo_bpm`, `valence`
-- `danceability`, `acousticness`
-
-The added songs increase diversity with genres and moods that were not in the starter set (for example: classical, house, country, hip hop, funk, gospel, folk, and moods like calm, euphoric, warm, confident, playful, uplifting, melancholic).
-
-### Step 2: User Profile
-
-Proposed taste profile dictionary:
-
-```python
-user_profile = {
-   "favorite_genre": "lofi",
-   "favorite_mood": "chill",
-   "target_energy": 0.38,
-   "likes_acoustic": True,
-}
-```
-
-Critique: this profile is specific enough to separate "intense rock" from "chill lofi" because genre and mood must match, energy is far lower than intense tracks, and `likes_acoustic=True` favors songs with higher acousticness.
-
-### Step 3: Algorithm Recipe
-
-Scoring logic for each song:
-
-- +2.0 points if `song.genre == favorite_genre`
-- +1.0 point if `song.mood == favorite_mood`
-- +2.0 * `(1 - abs(song.energy - target_energy))` for energy similarity
-- +0.75 points if `likes_acoustic=True` and `song.acousticness >= 0.60`
-- +0.35 * `song.valence` as a light tie-breaker for positivity
-- +0.20 * `song.danceability` as a light tie-breaker for groove
-
-Recommendation rule:
-
-- Score every song in the catalog
-- Sort songs by score (highest first)
-- Return Top K songs (for example, K = 5)
-
-### Step 4: Data Flow Map
+## Architecture Overview
 
 ```mermaid
 flowchart TD
-   A[Input: User Preferences Dictionary] --> B[Load songs.csv]
-   B --> C[Loop through one song at a time]
-   C --> D[Compute weighted score]
-   D --> E[Store song + score + explanation]
-   E --> F{More songs?}
-   F -- Yes --> C
-   F -- No --> G[Sort all songs by score descending]
-   G --> H[Output: Top K recommendations]
+    U[Human user / reviewer] --> I[main.py CLI runner]
+    I --> L[load_songs from data/songs.csv]
+    I --> R[recommender.py scoring logic]
+    L --> R
+    R --> O[Ranked songs + explanations]
+    O --> I
+    O --> H[Human review of top results]
+    T[tests/test_recommender.py] --> R
+    T --> V[Checks ranking, explanations, and stability]
+    V --> H
 ```
 
-### Step 5: Expected Biases
+The diagram shows a simple pipeline: the CLI runner loads data, the recommender ranks songs, and the test suite checks that the ranking and explanation behavior stay stable. Human review still matters because this is a small AI simulation, not a fully autonomous product.
 
-- The system may over-prioritize genre matches and miss cross-genre songs that fit mood and energy well.
-- A single fixed profile can flatten taste variety over time and reduce discovery.
-- Acoustic preference as a threshold can unfairly down-rank borderline songs even if they otherwise fit.
+If you want a presentation-ready image, export the diagram from Mermaid Live Editor and save it in [assets/](/workspaces/applied-ai-system-project/applied-ai-system-final/assets/).
 
----
+## Setup Instructions
 
-## Getting Started
+If you are starting from the repository root, first enter the project folder:
 
-### Setup
+```bash
+cd applied-ai-system-final
+```
 
-1. Create a virtual environment (optional but recommended):
+1. Create and activate a virtual environment.
 
    ```bash
    python -m venv .venv
-   source .venv/bin/activate      # Mac or Linux
-   .venv\Scripts\activate         # Windows
+   source .venv/bin/activate
+   ```
 
-2. Install dependencies
+2. Install the project dependencies.
 
-```bash
-pip install -r requirements.txt
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Run the recommender.
+
+   ```bash
+   python -m src.main
+   ```
+
+4. Run the tests.
+
+   ```bash
+   pytest
+   ```
+
+5. Run the automated reliability check.
+
+   ```bash
+   python scripts/reliability_check.py
+   ```
+
+## Sample Interactions
+
+Here are three real example outputs from the current scoring logic.
+
+```text
+=== High-Energy Pop ===
+1. Sunrise City by Neon Echo
+   Score   : 5.33
+   Reasons : genre match (+2.00); mood match (+1.00); energy similarity (+1.88); valence tie-break (+0.29); danceability tie-break (+0.16)
+2. Gym Hero by Max Pulse
+   Score   : 4.35
+   Reasons : genre match (+2.00); energy similarity (+1.90); valence tie-break (+0.27); danceability tie-break (+0.18)
+
+=== Chill Lofi ===
+1. Library Rain by Paper Lanterns
+   Score   : 6.08
+   Reasons : genre match (+2.00); mood match (+1.00); energy similarity (+2.00); acoustic preference match (+0.75); valence tie-break (+0.21); danceability tie-break (+0.12)
+2. Midnight Coding by LoRoom
+   Score   : 5.93
+   Reasons : genre match (+2.00); mood match (+1.00); energy similarity (+1.86); acoustic preference match (+0.75); valence tie-break (+0.20); danceability tie-break (+0.12)
+
+=== Deep Intense Rock ===
+1. Storm Runner by Voltline
+   Score   : 5.28
+   Reasons : genre match (+2.00); mood match (+1.00); energy similarity (+1.98); valence tie-break (+0.17); danceability tie-break (+0.13)
+2. Gym Hero by Max Pulse
+   Score   : 3.43
+   Reasons : mood match (+1.00); energy similarity (+1.98); valence tie-break (+0.27); danceability tie-break (+0.18)
 ```
 
-3. Run the app:
+These examples show that the recommender is functional, explainable, and sensitive to the user profile.
 
-```bash
-python -m src.main
-```
+## Design Decisions
 
-### Running Tests
+I built the system as a transparent rule-based recommender instead of a black-box model. That choice made the logic easy to explain, easy to test, and easy to debug during development. It also fit the size of the dataset: for a small CSV catalog, a weighted scoring system is simpler and more reliable than adding a trained model with no meaningful training data.
 
-Run the starter tests with:
+The biggest trade-off is accuracy versus interpretability. A rule-based system cannot learn complex preferences the way a real recommendation engine can, and it may overvalue genre matches or miss more subtle signals. In return, it gives clear reasons for every ranking decision, which is valuable for learning, debugging, and portfolio review.
 
-```bash
-pytest
-```
+## Testing Summary
 
-You can add more tests in `tests/test_recommender.py`.
+The test file [tests/test_recommender.py](/workspaces/applied-ai-system-project/applied-ai-system-final/tests/test_recommender.py) checks two important behaviors: that recommendations are ranked in the expected order, and that explanation strings are non-empty. I also ran a lightweight reliability check against the live recommender: 5 out of 5 checks passed, including catalog loading, three top-result assertions, and explanation validation.
 
----
+That reliability check now lives in [scripts/reliability_check.py](/workspaces/applied-ai-system-project/applied-ai-system-final/scripts/reliability_check.py), so it can be rerun as a command instead of only described in prose. What worked well was the predictability of the scoring function: the same profile consistently returned the same top songs. The main takeaway is that the application logic is straightforward and reproducible, and the scoring code already has simple guardrails because it falls back to safe defaults when optional preference fields are missing.
 
-## Experiments You Tried
+## Reflection and Ethics
 
-Use this section to document the experiments you ran. For example:
+This project showed me that even a small AI system is really a chain of design decisions: what data to use, how to score it, how to explain it, and how to check it. Its main limitations are the tiny catalog, the hand-tuned weights, and the bias toward the features I chose to emphasize, especially genre and energy. Because it does not learn from real user behavior, it can miss nuanced taste and can over-represent songs that fit the scoring rule rather than songs that feel genuinely diverse.
 
-- What happened when you changed the weight on genre from 2.0 to 0.5
-- What happened when you added tempo or valence to the score
-- How did your system behave for different types of users
+The system could be misused if someone treated it like an objective music ranking engine instead of a classroom demo. I would prevent that by labeling it clearly as a simple simulation, keeping human review in the loop, logging the scores and reasons for each recommendation, and avoiding any high-stakes claims about taste, quality, or preference. The reliability script also helps because it makes the behavior easy to re-check after changes.
 
----
+What surprised me during testing was how small weight changes could move songs around even when the output still looked reasonable. The results reminded me that an AI system can appear confident while still being shaped by very narrow rules, so tests matter as much as the explanation strings.
 
-## Limitations and Risks
+My collaboration with AI was useful in two different ways. A helpful suggestion was turning the reliability checks into a reusable script so the system could be tested repeatedly instead of only being inspected by hand. A flawed suggestion was relying too much on assumptions about the environment and setup before I verified them; I had to correct that by checking the actual folder structure and running the code from the real project path.
 
-Summarize some limitations of your recommender.
+For a future employer, this project shows that I can build a working AI-style application, document it clearly, and think critically about its limits and responsible use.
 
-Examples:
+## Model Card
 
-- It only works on a tiny catalog
-- It does not understand lyrics or language
-- It might over favor one genre or mood
-
-You will go deeper on this in your model card.
-
----
-
-## Reflection
-
-Read and complete `model_card.md`:
-
-[**Model Card**](model_card.md)
-
-Write 1 to 2 paragraphs here about what you learned:
-
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
-
-## Terminal Screenshot
-
-![Terminal Screenshot](terminal_screenshot.png)
-
-
----
-
-## 7. `model_card_template.md`
-
-Combines reflection and model card framing from the Module 3 guidance. :contentReference[oaicite:2]{index=2}  
-
-```markdown
-# 🎧 Model Card - Music Recommender Simulation
-
-## 1. Model Name
-
-Give your recommender a name, for example:
-
-> VibeFinder 1.0
-
----
-
-## 2. Intended Use
-
-- What is this system trying to do
-- Who is it for
-
-Example:
-
-> This model suggests 3 to 5 songs from a small catalog based on a user's preferred genre, mood, and energy level. It is for classroom exploration only, not for real users.
-
----
-
-## 3. How It Works (Short Explanation)
-
-Describe your scoring logic in plain language.
-
-- What features of each song does it consider
-- What information about the user does it use
-- How does it turn those into a number
-
-Try to avoid code in this section, treat it like an explanation to a non programmer.
-
----
-
-## 4. Data
-
-Describe your dataset.
-
-- How many songs are in `data/songs.csv`
-- Did you add or remove any songs
-- What kinds of genres or moods are represented
-- Whose taste does this data mostly reflect
-
----
-
-## 5. Strengths
-
-Where does your recommender work well
-
-You can think about:
-- Situations where the top results "felt right"
-- Particular user profiles it served well
-- Simplicity or transparency benefits
-
----
-
-## 6. Limitations and Bias
-
-Where does your recommender struggle
-
-Some prompts:
-- Does it ignore some genres or moods
-- Does it treat all users as if they have the same taste shape
-- Is it biased toward high energy or one genre by default
-- How could this be unfair if used in a real product
-
----
-
-## 7. Evaluation
-
-How did you check your system
-
-Examples:
-- You tried multiple user profiles and wrote down whether the results matched your expectations
-- You compared your simulation to what a real app like Spotify or YouTube tends to recommend
-- You wrote tests for your scoring logic
-
-You do not need a numeric metric, but if you used one, explain what it measures.
-
----
-
-## 8. Future Work
-
-If you had more time, how would you improve this recommender
-
-Examples:
-
-- Add support for multiple users and "group vibe" recommendations
-- Balance diversity of songs instead of always picking the closest match
-- Use more features, like tempo ranges or lyric themes
-
----
-
-## 9. Personal Reflection
-
-A few sentences about what you learned:
-
-- What surprised you about how your system behaved
-- How did building this change how you think about real music recommenders
-- Where do you think human judgment still matters, even if the model seems "smart"
+For a deeper discussion of strengths, risks, and intended use, see [model_card.md](/workspaces/applied-ai-system-project/applied-ai-system-final/model_card.md).
 
