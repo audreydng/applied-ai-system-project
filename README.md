@@ -30,7 +30,7 @@ flowchart TD
 
 The diagram shows a simple pipeline: the CLI runner loads data, the recommender ranks songs, and the test suite checks that the ranking and explanation behavior stay stable. Human review still matters because this is a small AI simulation, not a fully autonomous product.
 
-If you want a presentation-ready image, export the diagram from Mermaid Live Editor and save it in [assets/](/workspaces/applied-ai-system-project/applied-ai-system-final/assets/).
+If you want a presentation-ready image, export the diagram from Mermaid Live Editor and save it in [assets/](assets/).
 
 ## Setup Instructions
 
@@ -111,9 +111,9 @@ The biggest trade-off is accuracy versus interpretability. A rule-based system c
 
 ## Testing Summary
 
-The test file [tests/test_recommender.py](/workspaces/applied-ai-system-project/applied-ai-system-final/tests/test_recommender.py) checks two important behaviors: that recommendations are ranked in the expected order, and that explanation strings are non-empty. I also ran a lightweight reliability check against the live recommender: 5 out of 5 checks passed, including catalog loading, three top-result assertions, and explanation validation.
+The test file [tests/test_recommender.py](tests/test_recommender.py) checks two important behaviors: that recommendations are ranked in the expected order, and that explanation strings are non-empty. I also ran a lightweight reliability check against the live recommender: 5 out of 5 checks passed, including catalog loading, three top-result assertions, and explanation validation.
 
-That reliability check now lives in [scripts/reliability_check.py](/workspaces/applied-ai-system-project/applied-ai-system-final/scripts/reliability_check.py), so it can be rerun as a command instead of only described in prose. What worked well was the predictability of the scoring function: the same profile consistently returned the same top songs. The main takeaway is that the application logic is straightforward and reproducible, and the scoring code already has simple guardrails because it falls back to safe defaults when optional preference fields are missing.
+That reliability check now lives in [scripts/reliability_check.py](scripts/reliability_check.py), so it can be rerun as a command instead of only described in prose. What worked well was the predictability of the scoring function: the same profile consistently returned the same top songs. The main takeaway is that the application logic is straightforward and reproducible, and the scoring code already has simple guardrails because it falls back to safe defaults when optional preference fields are missing.
 
 ## Reflection and Ethics
 
@@ -129,5 +129,5 @@ For a future employer, this project shows that I can build a working AI-style ap
 
 ## Model Card
 
-For a deeper discussion of strengths, risks, and intended use, see [model_card.md](/workspaces/applied-ai-system-project/model_card.md).
+For a deeper discussion of strengths, risks, and intended use, see [model_card.md](model_card.md).
 
