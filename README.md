@@ -129,5 +129,5 @@ For a future employer, this project shows that I can build a working AI-style ap
 
 ## Model Card
 
-For a deeper discussion of strengths, risks, and intended use, see [model_card.md](/workspaces/applied-ai-system-project/applied-ai-system-final/model_card.md).
+For a deeper discussion of strengths, risks, and intended use, see [model_card.md](/workspaces/applied-ai-system-project/model_card.md).
 
